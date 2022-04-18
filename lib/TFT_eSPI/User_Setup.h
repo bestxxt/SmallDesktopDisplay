@@ -117,7 +117,7 @@
 // sketch. e.g. with digitalWrite(TFT_BL, LOW);
 
 // #define TFT_BL   5            // LED back-light control pin
-#define TFT_BACKLIGHT_ON LOW  // Level to turn ON back-light (HIGH or LOW)
+// #define TFT_BACKLIGHT_ON LOW  // Level to turn ON back-light (HIGH or LOW)
 
 
 
@@ -159,7 +159,7 @@
 #define TFT_RST  PIN_D4  // Reset pin (could connect to NodeMCU RST, see next line)
 //#define TFT_RST  -1    // Set TFT_RST to -1 if the display RESET is connected to NodeMCU RST or 3.3V
 
-#define TFT_BL PIN_D1  // LED back-light (only for ST7789 with backlight control pin)
+// #define TFT_BL PIN_D1  // LED back-light (only for ST7789 with backlight control pin)
 
 //#define TOUCH_CS PIN_D2     // Chip select pin (T_CS) of touch screen
 

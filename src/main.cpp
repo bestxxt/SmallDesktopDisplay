@@ -119,7 +119,7 @@ config_type wificonf ={{""},{""}};
 
 int updateweater_time = 10; //天气更新时间  X 分钟
 int LCD_Rotation = 0;   //LCD屏幕方向
-int LCD_BL_PWM = 10;//屏幕亮度0-100，默认50
+int LCD_BL_PWM = 50;//屏幕亮度0-100，默认15
 String cityCode = "101280101";  //天气城市代码 长沙:101250101株洲:101250301衡阳:101250401
 //----------------------------------------------------
 
@@ -945,6 +945,8 @@ void saveParamCallback(){
 void setup()
 {
   Serial.begin(115200);
+  delay(100);
+  Serial.println("串口初始化成功");
   EEPROM.begin(1024);
   // WiFi.forceSleepWake();
   // wm.resetSettings();    //在初始化中使wifi重置，需重新配置WiFi
@@ -955,8 +957,9 @@ void setup()
   DHT_img_flag = EEPROM.read(DHT_addr);
  #endif
  //从eeprom读取背光亮度设置
-  if(EEPROM.read(BL_addr)>0&&EEPROM.read(BL_addr)<100)
-    LCD_BL_PWM = EEPROM.read(BL_addr); 
+  if(EEPROM.read(BL_addr)>0&&EEPROM.read(BL_addr)<100){LCD_BL_PWM = EEPROM.read(BL_addr);}
+  Serial.printf("设置系统亮度为：");
+  Serial.println(LCD_BL_PWM);
   pinMode(LCD_BL_PIN, OUTPUT);
   analogWrite(LCD_BL_PIN, 255 - int(LCD_BL_PWM*2.5));
   //从eeprom读取屏幕方向设置
@@ -1069,6 +1072,7 @@ void setup()
   Serial.println("WIFI休眠......");
   Wifi_en = 0;
 #endif
+ 
 }
 
 
@@ -1080,6 +1084,7 @@ void loop()
   #endif
   LCD_reflash(0);
   Serial_set();
+ 
 }
 
 void LCD_reflash(int en)
