@@ -99,3 +99,5 @@ void WeatherNum::printfweather(int numx,int numy,int numw)
 
   
 }
+
+

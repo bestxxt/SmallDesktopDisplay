@@ -39,7 +39,7 @@
 #include "number.h"
 #include "weathernum.h"
 #include <Adafruit_Sensor.h>
-
+#include "country.h"
 /* *****************************************************************
  *  配置使能位
  * *****************************************************************/
@@ -52,7 +52,7 @@
 
 //注意，此版本中的DHT11传感器和太空人图片选择可以通过web网页设置来进行选择，无需通过使能标志来重新编译。
 //设定DHT11温湿度传感器使能标志
-#define DHT_EN  0
+#define DHT_EN  1
 //设置太空人图片是否使用
 #define imgAst_EN 1
 
@@ -95,6 +95,10 @@ DHT dht(DHTPIN,DHTTYPE);
 #include "img/pangzi/i7.h"
 #include "img/pangzi/i8.h"
 #include "img/pangzi/i9.h"
+
+
+#include "img/test/test.h"
+// #include "img/country/China.h"
 
 int Anim = 0;           //太空人图标显示指针记录
 int AprevTime = 0;      //太空人更新时间记录
@@ -152,7 +156,7 @@ String SMOD = "";//串口数据存储
 /*** Component objects ***/
 Number      dig;
 WeatherNum  wrat;
-
+Country     country;
 
 uint32_t targetTime = 0;   
 
@@ -977,6 +981,25 @@ void setup()
   tft.fillScreen(0x0000);
   tft.setTextColor(TFT_BLACK, bgColor);
 
+
+/*********************xxt添加***********************/
+
+// static int i=0;
+//   TJpgDec.setJpgScale(1);
+//   TJpgDec.setSwapBytes(true);
+//   TJpgDec.setCallback(tft_output);
+//   // country.printfcountry(0,82,0);
+//   // country.printfcountry(0,82+35,1);
+//   TJpgDec.drawJpg(0,100,china, sizeof(china));
+//   TJpgDec.drawJpg(0,0,data, sizeof(data));
+// while(1)
+// {
+//   delay(100);
+// }
+
+/*********************xxt添加***********************/
+
+
   targetTime = millis() + 1000; 
   readwificonfig();//读取存储的wifi信息
   Serial.print("正在连接WIFI ");
@@ -1084,7 +1107,7 @@ void loop()
   #endif
   LCD_reflash(0);
   Serial_set();
- 
+
 }
 
 void LCD_reflash(int en)
@@ -1458,39 +1481,50 @@ unsigned char Second_sign = 60;
 void digitalClockDisplay(int reflash_en)
 { 
   int timey=82;
+  
   if(hour()!=Hour_sign || reflash_en == 1)//时钟刷新
   {
-    dig.printfW1830(55,timey,hour()/10);
-    dig.printfW1830(75,timey,hour()%10);
+    dig.printfW1830(70,timey,hour()/10);
+    dig.printfW1830(90,timey,hour()%10);
     if(hour()>=15)
     {
-      dig.printfW1830(55,timey+35,(hour()-15)/10);
-      dig.printfW1830(75,timey+35,(hour()-15)%10);
+      dig.printfW1830(70,timey+35,(hour()-15)/10);
+      dig.printfW1830(90,timey+35,(hour()-15)%10);
     }
     else
     {
-      dig.printfW1830(55,timey+35,(hour()+9)/10);
-      dig.printfW1830(75,timey+35,(hour()+9)%10);
+      dig.printfW1830(70,timey+35,(hour()+9)/10);
+      dig.printfW1830(90,timey+35,(hour()+9)%10);
     }
    
     Hour_sign = hour();
-  }
+  } 
+
+  dig.printfdian(111,timey);//打印时钟中间的点
+  dig.printfdian(111,timey+35);//打印时钟中间的点
+
   if(minute()!=Minute_sign  || reflash_en == 1)//分钟刷新
   {
-    dig.printfW1830(101,timey,minute()/10);
-    dig.printfW1830(121,timey,minute()%10);
-    dig.printfW1830(101,timey+35,minute()/10);
-    dig.printfW1830(121,timey+35,minute()%10);
+    dig.printfW1830(120,timey,minute()/10);
+    dig.printfW1830(140,timey,minute()%10);
+    dig.printfW1830(120,timey+35,minute()/10);
+    dig.printfW1830(140,timey+35,minute()%10);
     Minute_sign = minute();
   }
-  if(second()!=Second_sign  || reflash_en == 1)//分钟刷新
+  if(second()!=Second_sign  || reflash_en == 1)//秒钟刷新
   {
-    dig.printfW1830(161,timey+20,second()/10);
-    dig.printfW1830(181,timey+20,second()%10);
+    dig.printfW1830(170,timey+20,second()/10);
+    dig.printfW1830(190,timey+20,second()%10);
     Second_sign = second();
   }
   
   if(reflash_en == 1) reflash_en = 0;
+
+  /***国旗****/
+  country.printfcountry(25,timey+5,0);
+  country.printfcountry(25,timey+40,1);
+  
+  
   /***日期****/
   clk.setColorDepth(8);
   clk.loadFont(ZdyLwFont_20);
@@ -1515,6 +1549,7 @@ void digitalClockDisplay(int reflash_en)
   
   clk.unloadFont();
   /***日期****/
+  clk.drawString(":",29,29);
 }
 
 //星期

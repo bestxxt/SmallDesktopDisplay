@@ -125,3 +125,8 @@ void Number::printfW1830(int numx,int numy,int numn)
       break;
   }
 }
+
+void Number::printfdian(int numx,int numy)
+{
+  TJpgDec.drawJpg(numx,numy,dian, sizeof(dian));
+}
