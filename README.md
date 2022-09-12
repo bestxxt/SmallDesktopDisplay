@@ -1,5 +1,5 @@
-# SmallDesktopDisplay
+# SmallDesktopDisplay 
 ## 基于SmallDesktopDisplay修改的项目
-
-![4F8C2D12-B29B-4471-B125-6B2544EC1F79.md.jpg](http://photo.dghtjn.cn/images/2022/04/11/4F8C2D12-B29B-4471-B125-6B2544EC1F79.md.jpg)
+- 增加国际时间显示
+![1](https://tva3.sinaimg.cn/large/006JqGD4ly1h63md741guj31ba0zgq65.jpg)
 
