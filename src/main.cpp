@@ -172,7 +172,7 @@ ESP8266WebServer server(80);// 建立esp8266网站服务器对象
 //NTP服务器参数
 static const char ntpServerName[] = "ntp6.aliyun.com";
 const int timeZone = 8;     //东八区
-
+const int timeZone2 = -15;     //西15区
 //wifi连接UDP设置参数
 WiFiUDP Udp;
 WiFiClient wificlient;
@@ -1075,9 +1075,11 @@ void setup()
   //   CityCODE += EEPROM.read(CC_addr+cnum-1); 
   //   delay(5);
   // }
-  if(CityCODE>=101000000 && CityCODE<=102000000) 
-    cityCode = CityCODE;  
-  else
+
+  // if(CityCODE>=101000000 && CityCODE<=102000000) 
+  //   cityCode = CityCODE;  
+  // else
+
     getCityCode();  //获取城市代码
    
   tft.fillScreen(TFT_BLACK);//清屏
@@ -1208,7 +1210,7 @@ void getCityCode(){
 // 获取城市天气
 void getCityWeater(){
 //  String URL = "http://d1.weather.com.cn/dingzhi/" + cityCode + ".html?_="+String(now());//新
- String URL = "http://d1.weather.com.cn/weather_index/" + String(101280101) + ".html?_="+String(now());//原来
+ String URL = "http://d1.weather.com.cn/weather_index/" + cityCode + ".html?_="+String(now());//原来
   //创建 HTTPClient 对象
   HTTPClient httpClient;
   
@@ -1486,15 +1488,15 @@ void digitalClockDisplay(int reflash_en)
   {
     dig.printfW1830(70,timey,hour()/10);
     dig.printfW1830(90,timey,hour()%10);
-    if(hour()>=15)
+    if(hour()>=-timeZone2)
     {
-      dig.printfW1830(70,timey+35,(hour()-15)/10);
-      dig.printfW1830(90,timey+35,(hour()-15)%10);
+      dig.printfW1830(70,timey+35,(hour()+timeZone2)/10);
+      dig.printfW1830(90,timey+35,(hour()+timeZone2)%10);
     }
     else
     {
-      dig.printfW1830(70,timey+35,(hour()+9)/10);
-      dig.printfW1830(90,timey+35,(hour()+9)%10);
+      dig.printfW1830(70,timey+35,(hour()+(24+timeZone2))/10);
+      dig.printfW1830(90,timey+35,(hour()+(24+timeZone2))%10);
     }
    
     Hour_sign = hour();
