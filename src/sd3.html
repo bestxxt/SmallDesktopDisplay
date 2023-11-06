@@ -1,0 +1,19 @@
+<html>
+    <style>
+    html,body{ background: #1aceff; color: #fff; font-size: 10px;}
+    </style>
+<body>
+    <form action='/' method='POST'><br><div>SDD Web Config</div><br>
+content += "City Code:<br><input type='text' name='web_ccode' placeholder='city code'><br>
+content += "<br>Back Light(1-100):(default:50)<br><input type='text' name='web_bl' placeholder='10'><br>
+content += "<br>Weather Update Time:(default:10)<br><input type='text' name='web_upwe_t' placeholder='10'><br>
+content += "<br>DHT Sensor Enable  <input type='radio' name='web_DHT11_en' value='0'checked> DIS \
+                                  <input type='radio' name='web_DHT11_en' value='1'> EN<br>
+<br>LCD Rotation<br>\
+            <input type='radio' name='web_set_rotation' value='0' checked> USB Down<br>\
+            <input type='radio' name='web_set_rotation' value='1'> USB Right<br>\
+            <input type='radio' name='web_set_rotation' value='2'> USB Up<br>\
+            <input type='radio' name='web_set_rotation' value='3'> USB Left<br>
+<br><div><input type='submit' name='Save' value='Save'></form></div>" + msg + "<br>
+By WCY<br>
+</body></html>

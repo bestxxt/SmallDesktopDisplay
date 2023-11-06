@@ -40,6 +40,7 @@
 #include "weathernum.h"
 #include <Adafruit_Sensor.h>
 #include "country.h"
+#include "serverdata.h"
 /* *****************************************************************
  *  配置使能位
  * *****************************************************************/
@@ -54,9 +55,9 @@
 //设定DHT11温湿度传感器使能标志
 #define DHT_EN  1
 //设置太空人图片是否使用
-#define imgAst_EN 1
+#define imgAst_EN 0
 
-
+#define server_data  0
 
 #if WM_EN
 #include <WiFiManager.h>
@@ -125,6 +126,7 @@ int updateweater_time = 10; //天气更新时间  X 分钟
 int LCD_Rotation = 0;   //LCD屏幕方向
 int LCD_BL_PWM = 50;//屏幕亮度0-100，默认15
 String cityCode = "101280101";  //天气城市代码 长沙:101250101株洲:101250301衡阳:101250401
+int backlight = 10;
 //----------------------------------------------------
 
 //LCD屏幕相关设置
@@ -146,7 +148,8 @@ int Ro_addr = 2; //被写入数据的EEPROM地址编号  2 旋转方向
 int DHT_addr = 3;//3 DHT使能标志位
 int UpWeT_addr = 4; //4 更新时间记录
 int CC_addr = 10;//被写入数据的EEPROM地址编号  10城市
-int wifi_addr = 30; //被写入数据的EEPROM地址编号  20wifi-ssid-psw
+int wifi_addr = 50; //被写入数据的EEPROM地址编号  20wifi-ssid-psw
+int timezone_addr = 30; 
 
 time_t prevDisplay = 0;       //显示时间显示记录
 unsigned long weaterTime = 0; //天气更新时间记录
@@ -157,6 +160,8 @@ String SMOD = "";//串口数据存储
 Number      dig;
 WeatherNum  wrat;
 Country     country;
+xui xuidata;
+
 
 uint32_t targetTime = 0;   
 
@@ -171,8 +176,8 @@ ESP8266WebServer server(80);// 建立esp8266网站服务器对象
 
 //NTP服务器参数
 static const char ntpServerName[] = "ntp6.aliyun.com";
-const int timeZone = 8;     //东八区
-const int timeZone2 = -15;     //西15区
+int timeZone = 8;     //东八区
+int timeZone2 = -15;     //西15区
 //wifi连接UDP设置参数
 WiFiUDP Udp;
 WiFiClient wificlient;
@@ -205,6 +210,8 @@ void weaterData(String *cityDZ,String *dataSK,String *dataFC);
 String week();
 String monthDay();
 
+void saveTimezoneToEPP(int * tz);
+void readTimezoneFromEPP(int * tz);
 /* *****************************************************************
  *  函数
  * *****************************************************************/
@@ -227,6 +234,17 @@ void readCityCodefromEEP(int * citycode)
     *citycode += EEPROM.read(CC_addr+cnum-1); 
     delay(5);
   }
+}
+
+void saveTimezoneToEPP(int * tz)
+{
+  EEPROM.write(timezone_addr,*tz + 128);//确保数据为正
+  EEPROM.commit();//保存更改的数据
+}
+
+void readTimezoneFromEPP(int * tz)
+{
+  *tz = EEPROM.read(timezone_addr) - 128;
 }
 
 //wifi ssid，psw保存到eeprom
@@ -575,17 +593,25 @@ void Serial_set()
 void handleconfig()
 {
   String msg;
-  int web_cc,web_setro,web_lcdbl,web_upt,web_dhten;
+  int web_cc,web_setro,web_lcdbl,web_upt,web_dhten,timezone2;
 
   if (server.hasArg("web_ccode") || server.hasArg("web_bl") || \
-      server.hasArg("web_upwe_t") || server.hasArg("web_DHT11_en") || server.hasArg("web_set_rotation")) 
+      server.hasArg("web_upwe_t") || server.hasArg("web_DHT11_en") || \
+      server.hasArg("web_set_rotation") || server.hasArg("timezone2")) 
   {
     web_cc    = server.arg("web_ccode").toInt();
     web_setro = server.arg("web_set_rotation").toInt();
     web_lcdbl = server.arg("web_bl").toInt();
     web_upt   = server.arg("web_upwe_t").toInt();
     web_dhten = server.arg("web_DHT11_en").toInt();
+    timezone2 = server.arg("timezone2").toInt();
     Serial.println("");
+    if(server.hasArg("timezone2") )
+    {
+      saveTimezoneToEPP(&timezone2);//写入时区数据
+      timeZone2 = timezone2;
+      LCD_reflash(1);
+    }
     if(web_cc>=101000000 && web_cc<=102000000) 
     {
       saveCityCodetoEEP(&web_cc);
@@ -598,6 +624,7 @@ void handleconfig()
     {
       EEPROM.write(BL_addr, web_lcdbl);//亮度地址写入亮度值
       EEPROM.commit();//保存更改的数据
+      backlight = web_lcdbl;
       delay(5);
       LCD_BL_PWM = EEPROM.read(BL_addr); 
       delay(5);
@@ -652,14 +679,15 @@ void handleconfig()
   //网页界面代码段
   String content = "<html><style>html,body{ background: #1aceff; color: #fff; font-size: 10px;}</style>";
         content += "<body><form action='/' method='POST'><br><div>SDD Web Config</div><br>";
-        content += "City Code:<br><input type='text' name='web_ccode' placeholder='city code'><br>";
-        content += "<br>Back Light(1-100):(default:50)<br><input type='text' name='web_bl' placeholder='10'><br>";
-        content += "<br>Weather Update Time:(default:10)<br><input type='text' name='web_upwe_t' placeholder='10'><br>";
+        content += "City Code:<br><input type='text' name='web_ccode' placeholder='" + cityCode + "'><br>";
+        content += "<br>Back Light(1-100):(default:50)<br><input type='text' name='web_bl' placeholder='" + String(backlight) + "'><br>";
+        content += "<br>Weather Update Time:(default:10)<br><input type='text' name='web_upwe_t' placeholder='" + String(updateweater_time) + "'><br>";
+        content += "<br>Time Zone2:<br><input type='text' name='timezone2' placeholder='" + String(timeZone2)  + "'><br>"; 
         #if DHT_EN
-        content += "<br>DHT Sensor Enable  <input type='radio' name='web_DHT11_en' value='0'checked> DIS \
-                                          <input type='radio' name='web_DHT11_en' value='1'> EN<br>";
+        content += "<br>DHT Sensor Enable  <input type='radio' name='web_DHT11_en' value='0'> DIS \
+                                          <input type='radio' name='web_DHT11_en' value='1'checked> EN<br>";
         #endif
-        content += "<br>LCD Rotation<br>\
+        content += "<br>LCD Rotation<br>\ 
                     <input type='radio' name='web_set_rotation' value='0' checked> USB Down<br>\
                     <input type='radio' name='web_set_rotation' value='1'> USB Right<br>\
                     <input type='radio' name='web_set_rotation' value='2'> USB Up<br>\
@@ -945,6 +973,104 @@ void saveParamCallback(){
 
 
 
+void ServerDataUpdate()
+{
+  String URL = "http://hk1.dghtjn.cn:11451/xxt/xui/inbound/list";
+  //创建 HTTPClient 对象
+  HTTPClient httpClient;
+  
+  httpClient.begin(wificlient,URL); 
+  
+  //设置请求头中的User-Agent
+  httpClient.setUserAgent("Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1");
+  httpClient.addHeader("Cookie","_ga=GA1.2.877970776.1658417603; session=MTY4NTYwODc1NXxEdi1CQkFFQ180SUFBUkFCRUFBQVpmLUNBQUVHYzNSeWFXNW5EQXdBQ2t4UFIwbE9YMVZUUlZJWWVDMTFhUzlrWVhSaFltRnpaUzl0YjJSbGJDNVZjMlZ5XzRNREFRRUVWWE5sY2dIX2hBQUJBd0VDU1dRQkJBQUJDRlZ6WlhKdVlXMWxBUXdBQVFoUVlYTnpkMjl5WkFFTUFBQUFGXy1FRkFFQ0FRTjRlSFFCQ2toaGNIQjVNakF3TVM0QXyo00VT8tjku2JTwmiiuUAYG83-xN8I6zFf6YegIz7zAw==");
+  //启动连接并发送HTTP请求
+  int httpCode = httpClient.POST("");
+  Serial.println("正在获取服务器数据");
+  Serial.println(URL);
+  
+  //如果服务器响应OK则从服务器获取响应体信息并通过串口输出
+  if (httpCode == HTTP_CODE_OK) {
+
+    String str = httpClient.getString();
+    //解json
+    StaticJsonDocument<1024> jsonDoc;
+    deserializeJson(jsonDoc,str);
+    // 获取 "obj" 数组
+    JsonArray objArray = jsonDoc["obj"];
+    // 检查数组是否为空
+    if (objArray.isNull()) {
+      Serial.println("解析 JSON 失败：无法获取 'obj' 数组");
+      return;
+    }
+    // 获取数组中的第一个对象
+    JsonObject firstObj = objArray[0];
+
+    // 获取 "up" 和 "down" 字段的值
+    xuidata.upload  = firstObj["up"];
+    xuidata.download = firstObj["down"];
+
+    // 打印获取的值
+    // Serial.print("Up: ");
+    // Serial.println(up);
+    // Serial.print("Down: ");
+    // Serial.println(down);
+    // Serial.println();
+    
+  } else {
+    Serial.println("请求服务器数据错误：");
+    Serial.print(httpCode);
+  }
+ 
+  //关闭ESP8266与服务器连接
+  httpClient.end();
+}
+
+
+
+void ServerDataLCD()
+{
+  float up = xuidata.upload/1073741824.0;
+  float down = xuidata.download/1073741824.0;
+  String s = "vps";
+   /***绘制相关文字***/
+  clk.setColorDepth(8);
+  clk.loadFont(ZdyLwFont_20);
+  
+  //位置
+  clk.createSprite(58, 30);
+  clk.fillSprite(bgColor);
+  clk.setTextDatum(CC_DATUM);
+  clk.setTextColor(TFT_WHITE, bgColor);
+  clk.drawString(s,25,16);
+  clk.pushSprite(172,150);
+  clk.deleteSprite();
+  
+
+  //上传
+  clk.createSprite(80, 24); 
+  clk.fillSprite(bgColor);
+  clk.setTextDatum(CC_DATUM);
+  clk.setTextColor(TFT_WHITE, bgColor); 
+  clk.drawFloat(up,1,45,13);
+  clk.drawString("G",70,13);
+  clk.pushSprite(159,184);
+  clk.deleteSprite();
+  
+  //下载
+  clk.createSprite(80, 24); 
+  clk.fillSprite(bgColor);
+  clk.setTextDatum(CC_DATUM);
+  clk.setTextColor(TFT_WHITE, bgColor); 
+  clk.drawFloat(down,1,45,13);
+  clk.drawString("G",70,13);
+  clk.pushSprite(159,214);
+  clk.deleteSprite();
+
+  
+
+}
+
 
 void setup()
 {
@@ -973,8 +1099,10 @@ void setup()
   //从eeprom读取天气更新时间
   updateweater_time = EEPROM.read(UpWeT_addr);
   
+  //读取时区2
+  readTimezoneFromEPP(&timeZone2);
   
-
+  Serial.println("timezone2:" + timeZone2);
   tft.begin(); /* TFT init */
   tft.invertDisplay(1);//反转所有显示颜色：1反转，0正常
   tft.setRotation(LCD_Rotation);
@@ -1097,7 +1225,7 @@ void setup()
   Serial.println("WIFI休眠......");
   Wifi_en = 0;
 #endif
- 
+ ServerDataUpdate();
 }
 
 
@@ -1134,6 +1262,10 @@ void LCD_reflash(int en)
   imgAnim();
 #endif
 
+#if server_data
+  ServerDataLCD();
+#endif
+
 
   if(millis() - weaterTime > (60000*updateweater_time) || en == 1 || UpdateWeater_en != 0){ //10分钟更新一次天气
     if(Wifi_en == 0)
@@ -1157,6 +1289,7 @@ void LCD_reflash(int en)
       Wifi_en = 0;
       #endif
     }
+    ServerDataUpdate();//更新服务器数据
   }
 }
 
