@@ -3,9 +3,9 @@
 A compact, customizable desktop clock with multi-time zone display, weather updates, and sensor integration.
 ![](imgs/68747470733a2f2f747661332e73696e61696d672e636e2f6c617267652f3030364a714744346c79316836336d6437343167756a33316261307a677136352e6a7067.jpeg)
 
-## Overview
+## Overview 
 
-This project involves creating a small desktop display using ESP8266 microcontrollers. It not only shows the current time but also provides weather updates, humidity, and temperature readings from both local sensors and online sources. Here's what it offers:
+This project involves creating a small desktop display using ESP8266 microcontrollers. It not only shows the current time but also provides weather updates, humidity, and temperature readings from both local sensors and online sources. Here's what it offers: 
 
 - **Time Display**: Shows the current time for multiple time zones, automatically synchronized via NTP servers.
 - **Weather Information**: Fetches weather data to display current conditions, forecast, and local sensor readings.
@@ -27,7 +27,7 @@ This project involves creating a small desktop display using ESP8266 microcontro
 ## Hardware Requirements
 
 - ESP8266 
-- LCD Display (compatible with I2C)
+- LCD Display (compatible with SPI)
 - DHT22 or similar sensor for temperature and humidity
 - Power supply (USB with appropriate voltage regulator)
 
